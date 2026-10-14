@@ -1,0 +1,56 @@
+name: Build libXray Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout libXray
+        uses: actions/checkout@v4
+        with:
+          repository: XTLS/libXray
+          path: libXray
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r29
+          add-to-path: true
+
+      - name: Build Android AAR
+        working-directory: libXray
+        run: python3 build/main.py android
+
+      - name: Upload AAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: libxray-android
+          path: |
+            libXray/libXray.aar
+            libXray/libXray-sources.jar
+          if-no-files-found: error
