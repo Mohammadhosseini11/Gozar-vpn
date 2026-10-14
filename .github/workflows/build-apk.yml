@@ -1,0 +1,57 @@
+name: Build Gozar APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Gozar
+        uses: actions/checkout@v4
+
+      - name: Download libXray artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build-libxray.yml
+          workflow_conclusion: success
+          name: libxray-android
+          path: downloaded
+          github_token: ${{ github.token }}
+
+      - name: Copy AAR into app
+        run: |
+          mkdir -p app/libs
+          cp downloaded/libXray.aar app/libs/libXray.aar
+          test -f app/libs/libXray.aar
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 11076708
+          packages: platform-tools
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: gozar-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
