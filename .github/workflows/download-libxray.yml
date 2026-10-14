@@ -1,0 +1,27 @@
+name: Download libXray Artifact
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  download:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download libXray from previous workflow
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build-libxray.yml
+          workflow_conclusion: success
+          name: libxray-android
+          path: downloaded
+          github_token: ${{ github.token }}
+
+      - name: Show downloaded files
+        run: |
+          find downloaded -maxdepth 3 -type f -print
+          test -f downloaded/libXray.aar
